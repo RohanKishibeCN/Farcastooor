@@ -45,7 +45,7 @@ async function generateCastContent(prompt) {
     const response = await axios.post(
       'https://api.moonshot.ai/v1/chat/completions',
       {
-        model: "moonshot-v1-8k",
+        model: "kimi-k2-turbo-preview",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.8
       },
