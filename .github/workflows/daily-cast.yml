@@ -10,6 +10,8 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 120 # 允许最长运行时间（包含我们的休眠时间）
+    permissions:
+      contents: write # 允许 Action 将战报 push 回仓库
 
     steps:
       - name: Checkout Repository
@@ -26,7 +28,6 @@ jobs:
       - name: Run AI Fleet Script
         env:
           KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
-          LARK_WEBHOOK_URL: ${{ secrets.LARK_WEBHOOK_URL }}
           NEYNAR_API_KEY_1: ${{ secrets.NEYNAR_API_KEY_1 }}
           NEYNAR_API_KEY_2: ${{ secrets.NEYNAR_API_KEY_2 }}
           SIGNER_UUID_A: ${{ secrets.SIGNER_UUID_A }}
@@ -34,3 +35,11 @@ jobs:
           SIGNER_UUID_C: ${{ secrets.SIGNER_UUID_C }}
           SIGNER_UUID_D: ${{ secrets.SIGNER_UUID_D }}
         run: npm start
+
+      - name: Commit and Push Report
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add report.md
+          git commit -m "docs: update daily report [skip ci]" || echo "No changes to commit"
+          git push

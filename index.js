@@ -1,11 +1,11 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
 // 环境变量获取
 const KIMI_API_KEY = process.env.KIMI_API_KEY;
-const LARK_WEBHOOK_URL = process.env.LARK_WEBHOOK_URL;
 
 // 账户配置列表：对应你申请的 2 个 Neynar API 和 4 个 Signer
 const ACCOUNTS = [
@@ -73,16 +73,13 @@ async function publishCast(neynarKey, signerUuid, text) {
   }
 }
 
-// 3. 推送飞书消息卡片
-async function sendLarkNotification(reportText) {
-  if (!LARK_WEBHOOK_URL) return;
+// 3. 保存战报到本地文件
+function saveReportToFile(reportText) {
   try {
-    await axios.post(LARK_WEBHOOK_URL, {
-      msg_type: "text",
-      content: { text: reportText }
-    });
+    fs.writeFileSync('report.md', reportText, 'utf8');
+    console.log('✅ 战报已成功保存到 report.md');
   } catch (error) {
-    console.error('飞书推送失败:', error.message);
+    console.error('保存战报失败:', error.message);
   }
 }
 
@@ -125,9 +122,9 @@ async function main() {
     }
   }
 
-  // 任务全部结束，汇总发送给飞书
-  console.log('\n✅ 任务全部完成，正在发送飞书通知...');
-  await sendLarkNotification(reportLines.join('\n'));
+  // 任务全部结束，保存战报
+  console.log('\n✅ 任务全部完成，正在生成本地战报文件...');
+  saveReportToFile(reportLines.join('\n'));
 }
 
 // 启动执行
