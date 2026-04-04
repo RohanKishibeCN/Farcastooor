@@ -1,0 +1,14 @@
+{
+  "name": "farcaster-ai-fleet",
+  "version": "1.0.0",
+  "description": "Farcaster AI 4 账户接管机器人",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5"
+  }
+}

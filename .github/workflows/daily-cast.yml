@@ -1,0 +1,36 @@
+name: Farcaster AI Daily Cast
+
+on:
+  schedule:
+    # 每天 UTC 时间 06:00 触发 (北京时间 14:00)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # 允许你在 GitHub 网页上手动点击按钮触发测试
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120 # 允许最长运行时间（包含我们的休眠时间）
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run AI Fleet Script
+        env:
+          KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+          LARK_WEBHOOK_URL: ${{ secrets.LARK_WEBHOOK_URL }}
+          NEYNAR_API_KEY_1: ${{ secrets.NEYNAR_API_KEY_1 }}
+          NEYNAR_API_KEY_2: ${{ secrets.NEYNAR_API_KEY_2 }}
+          SIGNER_UUID_A: ${{ secrets.SIGNER_UUID_A }}
+          SIGNER_UUID_B: ${{ secrets.SIGNER_UUID_B }}
+          SIGNER_UUID_C: ${{ secrets.SIGNER_UUID_C }}
+          SIGNER_UUID_D: ${{ secrets.SIGNER_UUID_D }}
+        run: npm start
