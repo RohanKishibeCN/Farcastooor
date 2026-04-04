@@ -1,6 +1,7 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import { getCryptoNews, getAINews } from './news.js';
 
 dotenv.config();
 
@@ -95,12 +96,29 @@ async function main() {
   console.log('🚀 开始执行 Farcaster AI 舰队每日发帖任务...');
   let reportLines = [`📊 Farcaster 舰队执行报告 (${new Date().toLocaleDateString()})\n`];
 
+  console.log('正在获取最新行业新闻...');
+  const cryptoNews = await getCryptoNews();
+  const aiNews = await getAINews();
+
+  // 读取或初始化状态文件（供后续协同使用）
+  let state = {};
+  if (fs.existsSync('state.json')) {
+    try { state = JSON.parse(fs.readFileSync('state.json', 'utf8')); } catch(e){}
+  }
+
   for (let i = 0; i < ACCOUNTS.length; i++) {
     const account = ACCOUNTS[i];
     console.log(`\n--- 正在处理账户: ${account.id} (${account.role}) ---`);
     
+    let finalPrompt = account.prompt;
+    if (account.id.includes('A') || account.id.includes('B')) {
+      if (cryptoNews) finalPrompt += `\n\nHere is today's crypto news:\n${cryptoNews}\n\nPick one interesting news to comment on or share.`;
+    } else {
+      if (aiNews) finalPrompt += `\n\nHere is today's tech/AI news:\n${aiNews}\n\nPick one interesting news to comment on or share.`;
+    }
+
     // 生成内容
-    const content = await generateCastContent(account.prompt);
+    const content = await generateCastContent(finalPrompt);
     if (!content) {
       reportLines.push(`❌ ${account.id}: 内容生成失败`);
       continue;
@@ -112,6 +130,7 @@ async function main() {
     if (castHash) {
       reportLines.push(`✅ ${account.id}: 发帖成功\n内容: ${content}`);
       console.log(`✅ 发帖成功! Hash: ${castHash}`);
+      state[account.id] = castHash; // 记录帖子 hash，用于后续巡检时的捧哏协同
     } else {
       reportLines.push(`❌ ${account.id}: 发帖失败`);
     }
@@ -121,6 +140,9 @@ async function main() {
       await randomSleep(5, 15);
     }
   }
+
+  // 保存状态供协同脚本使用
+  fs.writeFileSync('state.json', JSON.stringify(state, null, 2));
 
   // 任务全部结束，保存战报
   console.log('\n✅ 任务全部完成，正在生成本地战报文件...');

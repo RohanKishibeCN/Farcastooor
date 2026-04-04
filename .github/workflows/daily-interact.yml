@@ -1,17 +1,17 @@
-name: Farcaster AI Daily Cast
+name: Farcaster AI Daily Interact
 
 on:
   schedule:
-    # 每天 UTC 时间 06:00 触发 (北京时间 14:00)
-    - cron: '0 6 * * *'
-  workflow_dispatch: # 允许你在 GitHub 网页上手动点击按钮触发测试
+    # 每天 UTC 时间 02:00 和 12:00 触发 (北京时间 10:00 和 20:00)
+    - cron: '0 2,12 * * *'
+  workflow_dispatch:
 
 jobs:
-  run-bot:
+  run-interact:
     runs-on: ubuntu-latest
-    timeout-minutes: 120 # 允许最长运行时间（包含我们的休眠时间）
+    timeout-minutes: 60
     permissions:
-      contents: write # 允许 Action 将战报 push 回仓库
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -25,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run AI Fleet Script
+      - name: Run Interact Script
         env:
           KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
           NEYNAR_API_KEY_1: ${{ secrets.NEYNAR_API_KEY_1 }}
@@ -34,13 +34,13 @@ jobs:
           SIGNER_UUID_B: ${{ secrets.SIGNER_UUID_B }}
           SIGNER_UUID_C: ${{ secrets.SIGNER_UUID_C }}
           SIGNER_UUID_D: ${{ secrets.SIGNER_UUID_D }}
-        run: npm start
+        run: npm run interact
 
       - name: Commit and Push Report
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add report.md state.json
-          git commit -m "docs: update daily report and state [skip ci]" || echo "No changes to commit"
+          git commit -m "docs: update interact report [skip ci]" || echo "No changes to commit"
           git pull --rebase
           git push
