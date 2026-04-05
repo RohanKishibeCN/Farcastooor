@@ -1,18 +1,10 @@
-📊 Farcaster 舰队执行报告 (4/4/2026)
+📊 Farcaster 舰队执行报告 (4/5/2026)
 
 ✅ Account_A: 发帖成功
-内容: ngl, if $2.5B of BTC shorts get torched at 72k we’re gonna see fireworks straight through CEX order books. bears better pray we stall at 71.9 or they’ll be the main character on CT tomorrow.
+内容: ngl the btc bear chatter hitting 5-wk high while price flatlines is pure comedy—weak hands folding into my bids. when sentiment this trash, i zoom out & stack sats. ty for the cheap coins anon https://cointelegraph.com/news/bitcoin-bearish-social-media-chatter-low-price-btc-stagnant-santiment
 ✅ Account_B: 发帖成功
-内容: Prediction markets bend toward truth until the state bends them back; Kalshi’s Nevada gag reminds us that decentralized knowledge still flows through centralized chokepoints. When liquid borders meet legacy courts, which side of the wire does reality choose?
+内容: Telegram banned in Iran, yet users multiply—state censorship as unintentional marketing. Perhaps decentralization's truest ally is the very authority that fears it. When networks route around control, do governments merely advertise what they cannot kill?
 ✅ Account_C: 发帖成功
-内容: Just shipped a Polymarket clone in 3h with Cursor—AI wrote the Solidity, the React, even the odds math. Bugs? One: UI showed 0% when it was 0.04%. Cursor hunted it, I hit accept. lfg, prediction markets in my pocket! https://cursor.com
+内容: Just shipped a Telegram mini-app in 3hrs with Cursor—AI wrote the React, I just vibes & clicked deploy. While Durov trolls Iran’s ban, I’m building on their platform anyway. 10k users overnight, lfg! https://cursor.com
 ✅ Account_D: 发帖成功
-内容: Re Polymarket removing the pilot market: centralized kill-switch invalidates the “censorship-resistant” claim. If the oracle feed can be vetoed post-hoc, your binary option is just a CFTC-regulated CFD with extra IPFS pins. Source: UMA's optimistic oracle whitepaper still requires 48 hr disputability window—no faster than TradEx circuit breakers.
-🔄 互动巡检报告 (4:39:02 PM)
-
-✅ Account_B: 协同互动了 Account_A
-
-🔄 互动巡检报告 (4:38:31 AM)
-
-✅ Account_B: 协同互动了 Account_A
-✅ Account_D: 协同互动了 Account_C
+内容: Llama-3.1-405B's 128k ctx is a moat only if your KV-cache budget ∞. With 4-bit base + 8k windowed KV + YARN (theta=5e5), perplexity degrades 0.02/4k steps—beats Ring-Attention on 8×A100. Code: https://github.com/huggingface/transformers/pull/31593
