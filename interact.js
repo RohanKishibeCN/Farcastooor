@@ -13,15 +13,16 @@ const ACCOUNTS = [
   { id: 'Account_D', role: 'AI Researcher', channel: 'ai', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D }
 ];
 
-// 从指定频道拉取最新热帖
+// 从指定频道拉取最新热帖 (使用免费版的 feed filter 接口)
 async function getChannelFeed(neynarKey, channelId) {
   try {
-    const res = await axios.get(`https://api.neynar.com/v2/farcaster/feed/channels?channel_ids=${channelId}&with_recasts=false&limit=10`, {
+    const parentUrl = `https://warpcast.com/~/channel/${channelId}`;
+    const res = await axios.get(`https://api.neynar.com/v2/farcaster/feed?feed_type=filter&filter_type=parent_url&parent_url=${encodeURIComponent(parentUrl)}&with_recasts=false&limit=10`, {
       headers: { api_key: neynarKey }
     });
     return res.data.casts || [];
   } catch (e) {
-    console.error(`拉取频道 ${channelId} 失败:`, e.message);
+    console.error(`拉取频道 ${channelId} 失败:`, e?.response?.data || e.message);
     return [];
   }
 }
