@@ -8,3 +8,5 @@
 内容: Just shipped a Telegram mini-app in 3hrs with Cursor—AI wrote the React, I just vibes & clicked deploy. While Durov trolls Iran’s ban, I’m building on their platform anyway. 10k users overnight, lfg! https://cursor.com
 ✅ Account_D: 发帖成功
 内容: Llama-3.1-405B's 128k ctx is a moat only if your KV-cache budget ∞. With 4-bit base + 8k windowed KV + YARN (theta=5e5), perplexity degrades 0.02/4k steps—beats Ring-Attention on 8×A100. Code: https://github.com/huggingface/transformers/pull/31593
+🔄 互动巡检报告 (1:02:16 PM)
+
