@@ -1,6 +1,18 @@
 {
-  "Account_A": "0x4b78239f122b04d60daa1a7057bb96972967b742",
-  "Account_B": "0x9bab961dbda02dd2e3a6baf63ac81632edcb4986",
-  "Account_C": "0xdc423b2140d4f811e6d9e8802b1ee20993c8ee9b",
-  "Account_D": "0x1300ed7c3cb4866c8cf6dd2edd90a1d5d921aff3"
+  "Account_A": {
+    "hash": "0xf166b3090970fba78d63b35e3105515f3b27434a",
+    "username": "unknown"
+  },
+  "Account_B": {
+    "hash": "0x0d0aa31c63c5f71f0c2b354ce3ed327ed72f2a5d",
+    "username": "unknown"
+  },
+  "Account_C": {
+    "hash": "0xcb5173be08e053b64b96c96ba84a4f6dbc9d2118",
+    "username": "unknown"
+  },
+  "Account_D": {
+    "hash": "0x09c9ac1584398e1a0a9b6064f54d59b985559c8f",
+    "username": "unknown"
+  }
 }
