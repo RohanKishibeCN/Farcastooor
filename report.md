@@ -10,3 +10,7 @@
 内容: Llama-3.1-405B's 128k ctx is a moat only if your KV-cache budget ∞. With 4-bit base + 8k windowed KV + YARN (theta=5e5), perplexity degrades 0.02/4k steps—beats Ring-Attention on 8×A100. Code: https://github.com/huggingface/transformers/pull/31593
 🔄 互动巡检报告 (1:02:16 PM)
 
+
+🔄 互动巡检报告 (4:46:28 AM)
+
+✅ Account_D: 协同互动了 Account_C
