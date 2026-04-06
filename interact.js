@@ -7,22 +7,21 @@ dotenv.config();
 const KIMI_API_KEY = process.env.KIMI_API_KEY;
 
 const ACCOUNTS = [
-  { id: 'Account_A', role: 'Crypto Degen', channel: 'base', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_A },
-  { id: 'Account_B', role: 'Web3 Philosopher', channel: 'ethereum', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_B },
-  { id: 'Account_C', role: 'Vibe Coder', channel: 'frontend', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_C },
-  { id: 'Account_D', role: 'AI Researcher', channel: 'ai', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D }
+  { id: 'Account_A', role: 'Crypto Degen', targetFids: '3,2,602,1214', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_A }, // Dan Romero, v, Jesse Pollak
+  { id: 'Account_B', role: 'Web3 Philosopher', targetFids: '5650,4129,472', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_B }, // vitalik.eth, dcposch
+  { id: 'Account_C', role: 'Vibe Coder', targetFids: '1214,13505,3', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_C },
+  { id: 'Account_D', role: 'AI Researcher', targetFids: '4129,2,5650', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D }
 ];
 
-// 从指定频道拉取最新热帖 (使用免费版的 feed filter 接口)
-async function getChannelFeed(neynarKey, channelId) {
+// 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的用户 Feed 接口)
+async function getTargetUserFeed(neynarKey, fids) {
   try {
-    const parentUrl = `https://warpcast.com/~/channel/${channelId}`;
-    const res = await axios.get(`https://api.neynar.com/v2/farcaster/feed?feed_type=filter&filter_type=parent_url&parent_url=${encodeURIComponent(parentUrl)}&with_recasts=false&limit=10`, {
+    const res = await axios.get(`https://api.neynar.com/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&with_recasts=false&limit=10`, {
       headers: { api_key: neynarKey }
     });
     return res.data.casts || [];
   } catch (e) {
-    console.error(`拉取频道 ${channelId} 失败:`, e?.response?.data || e.message);
+    console.error(`拉取大V动态 (FIDs: ${fids}) 失败:`, e?.response?.data || e.message);
     return [];
   }
 }
@@ -88,7 +87,7 @@ async function main() {
 
   for (let i = 0; i < ACCOUNTS.length; i++) {
     const account = ACCOUNTS[i];
-    console.log(`\n--- 账号: ${account.id} 正在巡检 /${account.channel} 频道 ---`);
+    console.log(`\n--- 账号: ${account.id} 正在巡检大 V 动态 (FIDs: ${account.targetFids}) ---`);
     
     // Synergy (协同): 50% 的概率去给兄弟账号捧哏
     let didSynergy = false;
@@ -112,7 +111,7 @@ async function main() {
     }
 
     // Feed Polling (自动巡检拉取并用 Kimi 分析决策)
-    const casts = await getChannelFeed(account.neynarKey, account.channel);
+    const casts = await getTargetUserFeed(account.neynarKey, account.targetFids);
     if (casts.length > 0) {
       const decision = await analyzeWithKimi(account.role, casts);
       if (decision) {
