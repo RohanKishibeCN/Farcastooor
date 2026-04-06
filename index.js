@@ -40,7 +40,7 @@ const ACCOUNTS = [
   }
 ];
 
-// 1. 调用 Kimi API 生成内容
+// 1. 调用 Kimi API 生成内容 (返回 JSON 包含选择和内容)
 async function generateCastContent(prompt) {
   try {
     const response = await axios.post(
@@ -52,19 +52,27 @@ async function generateCastContent(prompt) {
       },
       { headers: { 'Authorization': `Bearer ${KIMI_API_KEY}` } }
     );
-    return response.data.choices[0].message.content.trim();
+    let content = response.data.choices[0].message.content.trim();
+    if (content.startsWith('```json')) {
+      content = content.replace(/```json\n?/, '').replace(/```/,'').trim();
+    }
+    return JSON.parse(content);
   } catch (error) {
     console.error('Kimi API 调用失败:', error?.response?.data || error.message);
     return null;
   }
 }
 
-// 2. 调用 Neynar API 发布 Cast
-async function publishCast(neynarKey, signerUuid, text) {
+// 2. 调用 Neynar API 发布 Cast (支持 embeds 图文链接)
+async function publishCast(neynarKey, signerUuid, text, embeds = []) {
   try {
+    const body = { signer_uuid: signerUuid, text: text };
+    if (embeds.length > 0) {
+      body.embeds = embeds;
+    }
     const response = await axios.post(
       'https://api.neynar.com/v2/farcaster/cast',
-      { signer_uuid: signerUuid, text: text },
+      body,
       { headers: { 'api_key': neynarKey, 'Content-Type': 'application/json' } }
     );
     return response.data?.cast?.hash; // 返回发帖成功的 hash
@@ -111,26 +119,49 @@ async function main() {
     console.log(`\n--- 正在处理账户: ${account.id} (${account.role}) ---`);
     
     let finalPrompt = account.prompt;
+    let availableNews = [];
     if (account.id.includes('A') || account.id.includes('B')) {
-      if (cryptoNews) finalPrompt += `\n\nHere is today's crypto news:\n${cryptoNews}\n\nPick one interesting news to comment on or share.`;
+      availableNews = cryptoNews;
     } else {
-      if (aiNews) finalPrompt += `\n\nHere is today's tech/AI news:\n${aiNews}\n\nPick one interesting news to comment on or share.`;
+      availableNews = aiNews;
+    }
+
+    if (availableNews && availableNews.length > 0) {
+      const newsJson = JSON.stringify(availableNews.map((n, idx) => ({ index: idx, title: n.title, link: n.link })), null, 2);
+      finalPrompt += `\n\nHere are today's top news:\n${newsJson}\n\nPick ONE news item to comment on. Your commentary MUST NOT contain the news URL itself in the text (it will be attached as an embed separately). Output ONLY a valid JSON object in this format:\n{"selected_index": 0, "commentary": "your sharp insight..."}`;
+    } else {
+      finalPrompt += `\n\nOutput ONLY a valid JSON object in this format:\n{"selected_index": -1, "commentary": "your sharp insight..."}`;
     }
 
     // 生成内容
-    const content = await generateCastContent(finalPrompt);
-    if (!content) {
+    const result = await generateCastContent(finalPrompt);
+    if (!result || !result.commentary) {
       reportLines.push(`❌ ${account.id}: 内容生成失败`);
       continue;
     }
-    console.log(`📝 生成内容: ${content}`);
+    console.log(`📝 生成内容: ${result.commentary}`);
+
+    let embeds = [];
+    if (result.selected_index !== undefined && result.selected_index >= 0 && availableNews[result.selected_index]) {
+      const selectedNews = availableNews[result.selected_index];
+      embeds.push({ url: selectedNews.link });
+      // 如果新闻有图片，也加到 embed 里（Farcaster 支持多个 embed）
+      if (selectedNews.image) {
+        embeds.push({ url: selectedNews.image });
+      }
+      console.log(`🔗 附带链接: ${selectedNews.link}`);
+    }
 
     // 发送到 Farcaster
-    const castHash = await publishCast(account.neynarKey, account.signerUuid, content);
+    const castHash = await publishCast(account.neynarKey, account.signerUuid, result.commentary, embeds);
     if (castHash) {
-      reportLines.push(`✅ ${account.id}: 发帖成功\n内容: ${content}`);
+      reportLines.push(`✅ ${account.id}: 发帖成功\n内容: ${result.commentary}`);
       console.log(`✅ 发帖成功! Hash: ${castHash}`);
-      state[account.id] = castHash; // 记录帖子 hash，用于后续巡检时的捧哏协同
+      // 记录帖子 hash 和 username，用于后续巡检时的 Quote 捧哏协同
+      state[account.id] = {
+        hash: castHash,
+        username: "unknown" // 发帖接口未返回 username，协同脚本用 URL fallback 处理
+      }; 
     } else {
       reportLines.push(`❌ ${account.id}: 发帖失败`);
     }

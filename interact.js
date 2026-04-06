@@ -26,10 +26,10 @@ async function getTargetUserFeed(neynarKey, fids) {
   }
 }
 
-// 核心决策层：使用 Kimi 根据人设分析哪条值得点赞/回复
+// 核心决策层：使用 Kimi 根据人设分析哪条值得 Quote Cast (引用转发)
 async function analyzeWithKimi(role, casts) {
   const castsText = casts.map((c, i) => `[${i}] Author: ${c.author.username}\nText: ${c.text}`).join('\n\n');
-  const prompt = `You are a ${role} on Farcaster. Here are some recent casts from your favorite channel:\n\n${castsText}\n\nChoose exactly ONE cast to LIKE, and ONE cast to REPLY to based on your persona. Your reply should be short, natural, in English, under 150 chars, no hashtags, no AI vibes.\n\nOutput ONLY a valid JSON object in this format:\n{"like_index": 0, "reply_index": 1, "reply_text": "your reply..."}`;
+  const prompt = `You are a ${role} on Farcaster. Here are some recent casts from top influencers:\n\n${castsText}\n\nChoose exactly ONE cast to QUOTE (Quote Tweet). Your commentary should be a sharp, independent perspective, adding value or polite counter-arguments. In English, under 200 chars, no hashtags, no AI vibes.\n\nOutput ONLY a valid JSON object in this format:\n{"quote_index": 0, "quote_text": "your insightful commentary..."}`;
   
   try {
     const response = await axios.post(
@@ -43,31 +43,28 @@ async function analyzeWithKimi(role, casts) {
     }
     return JSON.parse(content);
   } catch (e) {
-    console.error('Kimi 分析失败:', e.message);
+    console.error('Kimi 分析失败:', e?.response?.data || e.message);
     return null;
   }
 }
 
-// 执行点赞
-async function reactToCast(neynarKey, signerUuid, hash, type) {
+// 执行 Quote Cast (引用转发)
+async function quoteCast(neynarKey, signerUuid, text, targetHash, targetUsername) {
   try {
-    await axios.post('https://api.neynar.com/v2/farcaster/reaction', 
-      { signer_uuid: signerUuid, reaction_type: type, target: { hash } },
-      { headers: { api_key: neynarKey } }
-    );
-    return true;
-  } catch (e) { return false; }
-}
+    // Farcaster 官方支持用这个短链接来 Quote 任意 cast，即便 username unknown 也生效
+    const quoteUrl = targetUsername !== "unknown" 
+      ? `https://warpcast.com/${targetUsername}/${targetHash.substring(0,10)}`
+      : `https://warpcast.com/~/conversations/${targetHash}`;
 
-// 执行回复
-async function replyToCast(neynarKey, signerUuid, text, parentHash) {
-  try {
     const res = await axios.post('https://api.neynar.com/v2/farcaster/cast', 
-      { signer_uuid: signerUuid, text, parent: parentHash },
+      { signer_uuid: signerUuid, text: text, embeds: [{ url: quoteUrl }] },
       { headers: { api_key: neynarKey } }
     );
     return res.data?.cast?.hash;
-  } catch (e) { return null; }
+  } catch (e) { 
+    console.error('Quote Cast 失败:', e?.response?.data || e.message);
+    return null; 
+  }
 }
 
 const randomSleep = async (minMinutes, maxMinutes) => {
@@ -89,23 +86,21 @@ async function main() {
     const account = ACCOUNTS[i];
     console.log(`\n--- 账号: ${account.id} 正在巡检大 V 动态 (FIDs: ${account.targetFids}) ---`);
     
-    // Synergy (协同): 50% 的概率去给兄弟账号捧哏
+    // Synergy (协同): 50% 的概率去给兄弟账号 Quote 捧哏
     let didSynergy = false;
     if (account.id === 'Account_B' && state['Account_A']) {
        if (Math.random() > 0.5) {
-         console.log('🤖 触发矩阵协同：账号 B 回复 账号 A');
-         await replyToCast(account.neynarKey, account.signerUuid, "Based take tbh. Totally agree with this.", state['Account_A']);
-         await reactToCast(account.neynarKey, account.signerUuid, state['Account_A'], 'like');
-         reportLines.push(`✅ ${account.id}: 协同互动了 Account_A`);
+         console.log('🤖 触发矩阵协同：账号 B Quote 账号 A');
+         await quoteCast(account.neynarKey, account.signerUuid, "Based take tbh. Worth deep thinking.", state['Account_A'].hash, state['Account_A'].username);
+         reportLines.push(`✅ ${account.id}: Quote 协同了 Account_A`);
          didSynergy = true;
        }
     }
     if (account.id === 'Account_D' && state['Account_C'] && !didSynergy) {
        if (Math.random() > 0.5) {
-         console.log('🤖 触发矩阵协同：账号 D 回复 账号 C');
-         await replyToCast(account.neynarKey, account.signerUuid, "Great stuff. Shipping speed is everything.", state['Account_C']);
-         await reactToCast(account.neynarKey, account.signerUuid, state['Account_C'], 'like');
-         reportLines.push(`✅ ${account.id}: 协同互动了 Account_C`);
+         console.log('🤖 触发矩阵协同：账号 D Quote 账号 C');
+         await quoteCast(account.neynarKey, account.signerUuid, "Great stuff. Shipping speed is everything.", state['Account_C'].hash, state['Account_C'].username);
+         reportLines.push(`✅ ${account.id}: Quote 协同了 Account_C`);
          didSynergy = true;
        }
     }
@@ -115,15 +110,12 @@ async function main() {
     if (casts.length > 0) {
       const decision = await analyzeWithKimi(account.role, casts);
       if (decision) {
-         if (decision.like_index !== undefined && casts[decision.like_index]) {
-           await reactToCast(account.neynarKey, account.signerUuid, casts[decision.like_index].hash, 'like');
-           console.log(`❤️ 点赞了: ${casts[decision.like_index].text.substring(0,20)}...`);
+         if (decision.quote_index !== undefined && casts[decision.quote_index] && decision.quote_text) {
+           const targetCast = casts[decision.quote_index];
+           await quoteCast(account.neynarKey, account.signerUuid, decision.quote_text, targetCast.hash, targetCast.author.username);
+           console.log(`💬 引用转发了: ${decision.quote_text}`);
          }
-         if (decision.reply_index !== undefined && casts[decision.reply_index] && decision.reply_text) {
-           await replyToCast(account.neynarKey, account.signerUuid, decision.reply_text, casts[decision.reply_index].hash);
-           console.log(`💬 回复了: ${decision.reply_text}`);
-         }
-         reportLines.push(`✅ ${account.id}: 完成 1 次频道巡检、点赞与回复`);
+         reportLines.push(`✅ ${account.id}: 完成 1 次大V动态的 Quote Cast`);
       } else {
          reportLines.push(`❌ ${account.id}: 巡检分析失败`);
       }
