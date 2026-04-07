@@ -7,10 +7,10 @@ dotenv.config();
 const KIMI_API_KEY = process.env.KIMI_API_KEY;
 
 const ACCOUNTS = [
-  { id: 'Account_A', role: 'Crypto Degen', targetFids: '3,2,602,1214', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_A }, // Dan Romero, v, Jesse Pollak
-  { id: 'Account_B', role: 'Web3 Philosopher', targetFids: '5650,4129,472', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_B }, // vitalik.eth, dcposch
-  { id: 'Account_C', role: 'Vibe Coder', targetFids: '1214,13505,3', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_C },
-  { id: 'Account_D', role: 'AI Researcher', targetFids: '4129,2,5650', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D }
+  { id: 'Account_A', role: 'Crypto Degen', targetFids: '154,3514,136,168,618', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_A }, // fred, hayden.eth, tim, matthuang, rsa
+  { id: 'Account_B', role: 'Web3 Philosopher', targetFids: '5650,37,60,25,12', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_B }, // vitalik.eth, balajis, brianjarmstrong, cdixon, linda
+  { id: 'Account_C', role: 'Vibe Coder', targetFids: '3,2,2893,1214,602', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_C }, // dwr.eth, v, jessepollak, greg, horsefacts.eth
+  { id: 'Account_D', role: 'AI Researcher', targetFids: '61,56,115,4129,472', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D } // pmarca, packy, li, noun40, dcposch
 ];
 
 // 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的 Hub API 绕过付费墙)
