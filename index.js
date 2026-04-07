@@ -85,7 +85,16 @@ async function publishCast(neynarKey, signerUuid, text, embeds = []) {
 // 3. 保存战报到本地文件
 function saveReportToFile(reportText) {
   try {
-    fs.writeFileSync('report.md', reportText, 'utf8');
+    const dateStr = new Date().toLocaleDateString();
+    let existing = '';
+    try { existing = fs.readFileSync('report.md', 'utf8'); } catch(e) {}
+    
+    // 如果今天还没有写入过发帖战报，则清空并写入全新的一天；否则追加
+    if (!existing.includes(dateStr)) {
+      fs.writeFileSync('report.md', reportText + '\n\n', 'utf8');
+    } else {
+      fs.appendFileSync('report.md', reportText + '\n\n', 'utf8');
+    }
     console.log('✅ 战报已成功保存到 report.md');
   } catch (error) {
     console.error('保存战报失败:', error.message);

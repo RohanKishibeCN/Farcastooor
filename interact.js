@@ -7,10 +7,10 @@ dotenv.config();
 const KIMI_API_KEY = process.env.KIMI_API_KEY;
 
 const ACCOUNTS = [
-  { id: 'Account_A', role: 'Crypto Degen', targetFids: '154,3514,136,168,618', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_A }, // fred, hayden.eth, tim, matthuang, rsa
-  { id: 'Account_B', role: 'Web3 Philosopher', targetFids: '5650,37,60,25,12', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_B }, // vitalik.eth, balajis, brianjarmstrong, cdixon, linda
-  { id: 'Account_C', role: 'Vibe Coder', targetFids: '3,2,2893,1214,602', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_C }, // dwr.eth, v, jessepollak, greg, horsefacts.eth
-  { id: 'Account_D', role: 'AI Researcher', targetFids: '61,56,115,4129,472', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D } // pmarca, packy, li, noun40, dcposch
+  { id: 'Account_A', role: 'Crypto Degen', targetFids: '154,3514,136,168,212722,13021', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_A }, // fred, hayden.eth, tim, matthuang, uniswap, aave
+  { id: 'Account_B', role: 'Web3 Philosopher', targetFids: '5650,37,60,25,1786,295395', neynarKey: process.env.NEYNAR_API_KEY_1, signerUuid: process.env.SIGNER_UUID_B }, // vitalik.eth, balajis, brianjarmstrong, cdixon, a16zcrypto, paradigm
+  { id: 'Account_C', role: 'Vibe Coder', targetFids: '3,2,2893,12142,9419,536359', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_C }, // dwr.eth, v, jessepollak, base, optimism, arbitrum
+  { id: 'Account_D', role: 'AI Researcher', targetFids: '61,56,115,22469,809450', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D } // pmarca, packy, li, openai, cursor
 ];
 
 // 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的 Hub API 绕过付费墙)
@@ -155,7 +155,14 @@ async function main() {
   }
 
   // 追加写入战报
-  fs.appendFileSync('report.md', reportLines.join('\n') + '\n', 'utf8');
+  const dateStr = new Date().toLocaleDateString();
+  let existing = '';
+  try { existing = fs.readFileSync('report.md', 'utf8'); } catch(e) {}
+  if (!existing.includes(dateStr)) {
+    fs.writeFileSync('report.md', `📊 Farcaster 舰队执行报告 (${dateStr})\n\n` + reportLines.join('\n') + '\n\n', 'utf8');
+  } else {
+    fs.appendFileSync('report.md', reportLines.join('\n') + '\n\n', 'utf8');
+  }
   console.log('✅ 互动任务完成，报告已追加到 report.md');
 }
 
