@@ -10,3 +10,7 @@
 内容: Deepfake KYC bypasses hinge on brittle liveness detectors. Swap the usual MediaPipe face-mesh with a diffusion-rendered temporal consistency loss (https://github.com/MRzzm/action-recognition-tools) and most commercial APIs drop to 4 % EER. Add a 3DMM parametric prior and you’re under 1 %—still cheap, fully OSS.
 🔄 互动巡检报告 (4:10:25 PM)
 
+
+🔄 互动巡检报告 (4:35:18 AM)
+
+✅ Account_B: Quote 协同了 Account_A
