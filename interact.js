@@ -18,6 +18,11 @@ async function getTargetUserFeed(neynarKey, fidsStr) {
   const fids = fidsStr.split(',');
   let allCasts = [];
   
+  // Farcaster Epoch 是 2021年1月1日
+  const FARCASTER_EPOCH = 1609459200;
+  const currentFarcasterTime = Math.floor(Date.now() / 1000) - FARCASTER_EPOCH;
+  const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
+  
   for (const fid of fids) {
     try {
       const res = await axios.get(`https://hub-api.neynar.com/v1/castsByFid?fid=${fid.trim()}&pageSize=5&reverse=true`, {
@@ -28,8 +33,10 @@ async function getTargetUserFeed(neynarKey, fidsStr) {
       for (const msg of messages) {
         if (msg.data.type === 'MESSAGE_TYPE_CAST_ADD' && msg.data.castAddBody) {
           const text = msg.data.castAddBody.text || '';
-          // 只挑选有足够文本内容的原贴（过滤掉纯回复），保证 Kimi 有内容可评
-          if (!msg.data.castAddBody.parentCastId && text.length > 20) {
+          const castAge = currentFarcasterTime - msg.data.timestamp;
+          
+          // 只挑选有足够文本内容的原贴，且必须是 7 天内的新帖（过滤掉大V的远古贴）
+          if (!msg.data.castAddBody.parentCastId && text.length > 20 && castAge < SEVEN_DAYS_IN_SECONDS) {
              allCasts.push({
                hash: msg.hash,
                text: text,
