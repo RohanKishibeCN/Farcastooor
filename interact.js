@@ -13,17 +13,38 @@ const ACCOUNTS = [
   { id: 'Account_D', role: 'AI Researcher', targetFids: '4129,2,5650', neynarKey: process.env.NEYNAR_API_KEY_2, signerUuid: process.env.SIGNER_UUID_D }
 ];
 
-// 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的用户 Feed 接口)
-async function getTargetUserFeed(neynarKey, fids) {
-  try {
-    const res = await axios.get(`https://api.neynar.com/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&with_recasts=false&limit=10`, {
-      headers: { api_key: neynarKey }
-    });
-    return res.data.casts || [];
-  } catch (e) {
-    console.error(`拉取大V动态 (FIDs: ${fids}) 失败:`, e?.response?.data || e.message);
-    return [];
+// 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的 Hub API 绕过付费墙)
+async function getTargetUserFeed(neynarKey, fidsStr) {
+  const fids = fidsStr.split(',');
+  let allCasts = [];
+  
+  for (const fid of fids) {
+    try {
+      const res = await axios.get(`https://hub-api.neynar.com/v1/castsByFid?fid=${fid.trim()}&pageSize=5&reverse=true`, {
+        headers: { api_key: neynarKey }
+      });
+      
+      const messages = res.data.messages || [];
+      for (const msg of messages) {
+        if (msg.data.type === 'MESSAGE_TYPE_CAST_ADD' && msg.data.castAddBody) {
+          const text = msg.data.castAddBody.text || '';
+          // 只挑选有足够文本内容的原贴（过滤掉纯回复），保证 Kimi 有内容可评
+          if (!msg.data.castAddBody.parentCastId && text.length > 20) {
+             allCasts.push({
+               hash: msg.hash,
+               text: text,
+               author: { username: `fid_${fid.trim()}` } // Hub API 不返回用户名，用占位符
+             });
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`拉取大V动态 (FID: ${fid}) 失败:`, e?.response?.data || e.message);
+    }
   }
+  
+  // 随机打乱并返回前 10 条高质量帖子给 Kimi 挑选
+  return allCasts.sort(() => 0.5 - Math.random()).slice(0, 10);
 }
 
 // 核心决策层：使用 Kimi 根据人设分析哪条值得 Quote Cast (引用转发)
@@ -52,7 +73,7 @@ async function analyzeWithKimi(role, casts) {
 async function quoteCast(neynarKey, signerUuid, text, targetHash, targetUsername) {
   try {
     // Farcaster 官方支持用这个短链接来 Quote 任意 cast，即便 username unknown 也生效
-    const quoteUrl = targetUsername !== "unknown" 
+    const quoteUrl = targetUsername !== "unknown" && !targetUsername.startsWith("fid_")
       ? `https://warpcast.com/${targetUsername}/${targetHash.substring(0,10)}`
       : `https://warpcast.com/~/conversations/${targetHash}`;
 
