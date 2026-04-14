@@ -53,8 +53,9 @@ async function generateCastContent(prompt) {
       { headers: { 'Authorization': `Bearer ${KIMI_API_KEY}` } }
     );
     let content = response.data.choices[0].message.content.trim();
-    if (content.startsWith('```json')) {
-      content = content.replace(/```json\n?/, '').replace(/```/,'').trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
     }
     return JSON.parse(content);
   } catch (error) {

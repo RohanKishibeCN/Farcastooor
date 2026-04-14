@@ -2,8 +2,8 @@ name: Farcaster AI Daily Cast
 
 on:
   schedule:
-    # 每天 UTC 时间 06:00 触发 (北京时间 14:00)
-    - cron: '0 6 * * *'
+    # 每 3 天的 UTC 时间 06:00 触发 (北京时间 14:00)
+    - cron: '0 6 */3 * *'
   workflow_dispatch: # 允许你在 GitHub 网页上手动点击按钮触发测试
 
 jobs:

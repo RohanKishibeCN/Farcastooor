@@ -14,8 +14,12 @@ const ACCOUNTS = [
 ];
 
 // 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的 Hub API 绕过付费墙)
-async function getTargetUserFeed(neynarKey, fidsStr) {
+async function getTargetUserFeed(neynarKey, fidsStr, quotedHashes = []) {
   const fids = fidsStr.split(',');
+  // 随机挑选 2-3 个大 V，降低 API 请求频率和成本
+  const numToSelect = Math.floor(Math.random() * 2) + 2;
+  const selectedFids = fids.sort(() => 0.5 - Math.random()).slice(0, numToSelect);
+  
   let allCasts = [];
   
   // Farcaster Epoch 是 2021年1月1日
@@ -23,7 +27,7 @@ async function getTargetUserFeed(neynarKey, fidsStr) {
   const currentFarcasterTime = Math.floor(Date.now() / 1000) - FARCASTER_EPOCH;
   const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
   
-  for (const fid of fids) {
+  for (const fid of selectedFids) {
     try {
       const res = await axios.get(`https://hub-api.neynar.com/v1/castsByFid?fid=${fid.trim()}&pageSize=5&reverse=true`, {
         headers: { api_key: neynarKey }
@@ -35,8 +39,8 @@ async function getTargetUserFeed(neynarKey, fidsStr) {
           const text = msg.data.castAddBody.text || '';
           const castAge = currentFarcasterTime - msg.data.timestamp;
           
-          // 只挑选有足够文本内容的原贴，且必须是 7 天内的新帖（过滤掉大V的远古贴）
-          if (!msg.data.castAddBody.parentCastId && text.length > 20 && castAge < SEVEN_DAYS_IN_SECONDS) {
+          // 只挑选有足够文本内容的原贴或有意义的回复贴，且必须是 7 天内的新帖，并且未被 Quote 过
+          if (text.length > 20 && castAge < SEVEN_DAYS_IN_SECONDS && !quotedHashes.includes(msg.hash)) {
              allCasts.push({
                hash: msg.hash,
                text: text,
@@ -66,8 +70,9 @@ async function analyzeWithKimi(role, casts) {
       { headers: { 'Authorization': `Bearer ${KIMI_API_KEY}` } }
     );
     let content = response.data.choices[0].message.content.trim();
-    if (content.startsWith('```json')) {
-      content = content.replace(/```json\n?/, '').replace(/```/,'');
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
     }
     return JSON.parse(content);
   } catch (e) {
@@ -134,25 +139,48 @@ async function main() {
     }
 
     // Feed Polling (自动巡检拉取并用 Kimi 分析决策)
-    const casts = await getTargetUserFeed(account.neynarKey, account.targetFids);
+    if (!state[account.id]) {
+      state[account.id] = { quoted_hashes: [] };
+    } else if (!state[account.id].quoted_hashes) {
+      state[account.id].quoted_hashes = [];
+    }
+
+    const casts = await getTargetUserFeed(account.neynarKey, account.targetFids, state[account.id].quoted_hashes);
     if (casts.length > 0) {
       const decision = await analyzeWithKimi(account.role, casts);
       if (decision) {
          if (decision.quote_index !== undefined && casts[decision.quote_index] && decision.quote_text) {
            const targetCast = casts[decision.quote_index];
-           await quoteCast(account.neynarKey, account.signerUuid, decision.quote_text, targetCast.hash, targetCast.author.username);
-           console.log(`💬 引用转发了: ${decision.quote_text}`);
+           const hash = await quoteCast(account.neynarKey, account.signerUuid, decision.quote_text, targetCast.hash, targetCast.author.username);
+           if (hash) {
+             console.log(`💬 引用转发了: ${decision.quote_text}`);
+             // 更新 quoted_hashes
+             state[account.id].quoted_hashes.unshift(targetCast.hash);
+             if (state[account.id].quoted_hashes.length > 100) {
+               state[account.id].quoted_hashes.pop();
+             }
+             reportLines.push(`✅ ${account.id}: 完成 1 次大V动态的 Quote Cast`);
+           } else {
+             reportLines.push(`❌ ${account.id}: Quote Cast 发送失败`);
+           }
+         } else {
+            reportLines.push(`✅ ${account.id}: Kimi 决定跳过此次 Quote`);
          }
-         reportLines.push(`✅ ${account.id}: 完成 1 次大V动态的 Quote Cast`);
       } else {
          reportLines.push(`❌ ${account.id}: 巡检分析失败`);
       }
+    } else {
+      reportLines.push(`✅ ${account.id}: 本次随机拉取未发现新的或未被 Quote 过的推文，跳过`);
+      console.log(`⚠️ ${account.id}: 候选池为空 (可能所有拉取到的推文都已被 Quote 过)`);
     }
 
     if (i < ACCOUNTS.length - 1) {
       await randomSleep(2, 5); // 巡检互动可以频率高一点，休眠 2-5 分钟
     }
   }
+
+  // 保存状态，包括 quoted_hashes
+  fs.writeFileSync('state.json', JSON.stringify(state, null, 2));
 
   // 追加写入战报
   const dateStr = new Date().toLocaleDateString();

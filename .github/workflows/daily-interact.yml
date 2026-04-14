@@ -2,8 +2,8 @@ name: Farcaster AI Daily Interact
 
 on:
   schedule:
-    # 每天 UTC 时间 02:00 和 12:00 触发 (北京时间 10:00 和 20:00)
-    - cron: '0 2,12 * * *'
+    # 每 3 天的 UTC 时间 02:00 触发
+    - cron: '0 2 */3 * *'
   workflow_dispatch:
 
 jobs:
