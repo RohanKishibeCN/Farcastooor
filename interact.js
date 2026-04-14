@@ -16,9 +16,8 @@ const ACCOUNTS = [
 // 从指定的大 V (FIDs) 拉取最新热帖 (使用绝对免费的 Hub API 绕过付费墙)
 async function getTargetUserFeed(neynarKey, fidsStr, quotedHashes = []) {
   const fids = fidsStr.split(',');
-  // 随机挑选 2-3 个大 V，降低 API 请求频率和成本
-  const numToSelect = Math.floor(Math.random() * 2) + 2;
-  const selectedFids = fids.sort(() => 0.5 - Math.random()).slice(0, numToSelect);
+  // 打乱大 V 列表，准备逐个拉取（抽卡逻辑）
+  const shuffledFids = fids.sort(() => 0.5 - Math.random());
   
   let allCasts = [];
   
@@ -27,13 +26,15 @@ async function getTargetUserFeed(neynarKey, fidsStr, quotedHashes = []) {
   const currentFarcasterTime = Math.floor(Date.now() / 1000) - FARCASTER_EPOCH;
   const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
   
-  for (const fid of selectedFids) {
+  for (const fid of shuffledFids) {
     try {
       const res = await axios.get(`https://hub-api.neynar.com/v1/castsByFid?fid=${fid.trim()}&pageSize=5&reverse=true`, {
         headers: { api_key: neynarKey }
       });
       
       const messages = res.data.messages || [];
+      let foundNewCast = false;
+
       for (const msg of messages) {
         if (msg.data.type === 'MESSAGE_TYPE_CAST_ADD' && msg.data.castAddBody) {
           const text = msg.data.castAddBody.text || '';
@@ -46,16 +47,26 @@ async function getTargetUserFeed(neynarKey, fidsStr, quotedHashes = []) {
                text: text,
                author: { username: `fid_${fid.trim()}` } // Hub API 不返回用户名，用占位符
              });
+             foundNewCast = true;
           }
         }
       }
+
+      // 如果在这个大 V 身上找到了至少一条合格的新推文，就停止拉取其他大 V，直接返回结果，节省 API 成本
+      if (foundNewCast) {
+        console.log(`✅ 在大 V (FID: ${fid.trim()}) 身上找到了新鲜推文，停止拉取其余大 V。`);
+        break;
+      } else {
+        console.log(`⏭️ 大 V (FID: ${fid.trim()}) 没有新鲜推文，尝试下一个大 V...`);
+      }
+
     } catch (e) {
       console.error(`拉取大V动态 (FID: ${fid}) 失败:`, e?.response?.data || e.message);
     }
   }
   
-  // 随机打乱并返回前 10 条高质量帖子给 Kimi 挑选
-  return allCasts.sort(() => 0.5 - Math.random()).slice(0, 10);
+  // 返回所有收集到的高质量帖子给 Kimi 挑选（通常只包含一个大 V 的几条新鲜推文）
+  return allCasts;
 }
 
 // 核心决策层：使用 Kimi 根据人设分析哪条值得 Quote Cast (引用转发)
