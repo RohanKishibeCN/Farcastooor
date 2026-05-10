@@ -77,7 +77,7 @@ async function analyzeWithKimi(role, casts) {
   try {
     const response = await axios.post(
       'https://api.moonshot.ai/v1/chat/completions',
-      { model: "kimi-k2.5", messages: [{ role: "user", content: prompt }], temperature: 0.8 },
+      { model: "kimi-k2.5", messages: [{ role: "user", content: prompt }], temperature: 1 },
       { headers: { 'Authorization': `Bearer ${KIMI_API_KEY}` } }
     );
     let content = response.data.choices[0].message.content.trim();
