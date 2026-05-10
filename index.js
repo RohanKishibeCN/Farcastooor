@@ -48,7 +48,7 @@ async function generateCastContent(prompt) {
       {
         model: "kimi-k2.5",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.8
+        temperature: 1
       },
       { headers: { 'Authorization': `Bearer ${KIMI_API_KEY}` } }
     );
