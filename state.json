@@ -1,26 +1,18 @@
 {
   "Account_A": {
-    "hash": "0xdddcd0892595642b2ec0675fda3129bb6235b925",
-    "username": "unknown",
-    "quoted_hashes": [
-      "0xba1dd89d1199e18e2cdc3f73d0c55dd55d1979ce"
-    ]
+    "hash": "0xd796f86d5e3aa61585eca3994a6bba1a36f4c36c",
+    "username": "unknown"
   },
   "Account_B": {
-    "hash": "0x4c9b28d5e6f5faf1b5e86960e491b8612f8c4aa4",
-    "username": "unknown",
-    "quoted_hashes": [
-      "0x0b17a5b9cf8c48c4b9cf0485e92815cd5a3537f0"
-    ]
+    "hash": "0xb5f88244bfadb04be885814fff10f8c07d14e241",
+    "username": "unknown"
   },
   "Account_C": {
-    "hash": "0x855272356ee42edc1a90a0cf3aac70ccc9d864b8",
-    "username": "unknown",
-    "quoted_hashes": []
+    "hash": "0x44ea3d56eab88414f0332f5a556135d4f3f20dc1",
+    "username": "unknown"
   },
   "Account_D": {
-    "hash": "0x322f56a63ff0ea3407f21c8523867ac0983fd65f",
-    "username": "unknown",
-    "quoted_hashes": []
+    "hash": "0xe77ced7c5d10f225e82f2ab5f910339826910d5b",
+    "username": "unknown"
   }
 }
